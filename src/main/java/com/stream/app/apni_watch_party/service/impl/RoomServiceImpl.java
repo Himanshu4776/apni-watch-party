@@ -46,4 +46,10 @@ public class RoomServiceImpl implements RoomService {
         }
         return null;
     }
+
+    @Override
+    public Room getRoomById(String roomId) {
+        Optional<Room> room = roomRepository.findById(roomId);
+        return room.orElse(null);
+    }
 }
