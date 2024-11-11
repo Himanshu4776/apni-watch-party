@@ -78,6 +78,6 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     public List<Video> getAll() {
-        return null;
+        return videoRepository.findAll();
     }
 }
