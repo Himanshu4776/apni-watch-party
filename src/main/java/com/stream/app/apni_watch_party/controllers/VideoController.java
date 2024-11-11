@@ -19,6 +19,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/video")
+@CrossOrigin(origins = "http://127.0.0.1:5173/")
 public class VideoController {
     @Autowired
     VideoService videoService;
