@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,7 +16,7 @@ interface LandingPageProps {
   setAuthMode: (mode: 'login' | 'register') => void;
 }
 
-export default function LandingPage({
+export function LandingPage({
   setShowAuthModal,
   setAuthMode,
 }: LandingPageProps) {

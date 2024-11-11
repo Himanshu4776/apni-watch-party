@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,7 +14,7 @@ interface HeaderProps {
   handleLogout: () => void;
 }
 
-export default function Header({
+export function Header({
   isLoggedIn,
   setShowAuthModal,
   setAuthMode,

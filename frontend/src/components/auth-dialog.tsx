@@ -23,7 +23,7 @@ interface AuthDialogProps {
   }>;
 }
 
-export default function AuthDialog({
+export function AuthDialog({
   showAuthModal,
   setShowAuthModal,
   authMode,

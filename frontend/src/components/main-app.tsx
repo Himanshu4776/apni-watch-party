@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Play, Upload } from 'lucide-react';
-import { VideoPlayer } from './components/video-player';
+import { VideoPlayer } from './video-player';
 
 interface Video {
   id: string;
