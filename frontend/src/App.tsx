@@ -21,7 +21,10 @@ export default function App() {
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
     if (authDataRef.current.username && authDataRef.current.password) {
-      localStorage.setItem("username", JSON.stringify(authDataRef.current.username));
+      localStorage.setItem(
+        "username",
+        JSON.stringify(authDataRef.current.username)
+      );
       setIsLoggedIn(true);
       setShowAuthModal(false);
     }
@@ -30,16 +33,16 @@ export default function App() {
   const handleLogout = () => {
     localStorage.clear();
     console.log("logout", localStorage.getItem("username"));
-    
+
     setIsLoggedIn(false);
     authDataRef.current = { username: "", password: "", name: "" };
   };
 
   useEffect(() => {
-    if(localStorage.getItem("username") != null) {
+    if (localStorage.getItem("username") != null) {
       setIsLoggedIn(true);
     }
-  }, [localStorage.getItem("username")])
+  }, [localStorage.getItem("username")]);
 
   return (
     <Router>
@@ -61,6 +64,7 @@ export default function App() {
                   <LandingPage
                     setShowAuthModal={setShowAuthModal}
                     setAuthMode={setAuthMode}
+                    isLoggedIn={isLoggedIn}
                   />
                 )
               }
@@ -68,6 +72,20 @@ export default function App() {
             <Route
               path="/dashboard"
               element={isLoggedIn ? <Room /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/room/:roomId"
+              element={isLoggedIn ? <MainApp /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/landing"
+              element={
+                <LandingPage
+                  setShowAuthModal={setShowAuthModal}
+                  setAuthMode={setAuthMode}
+                  isLoggedIn={isLoggedIn}
+                />
+              }
             />
           </Routes>
         </main>

@@ -10,15 +10,18 @@ import {
   Heart,
   MessageSquare,
 } from 'lucide-react';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 interface LandingPageProps {
   setShowAuthModal: (show: boolean) => void;
   setAuthMode: (mode: 'login' | 'register') => void;
+  isLoggedIn: boolean;
 }
 
 export function LandingPage({
   setShowAuthModal,
   setAuthMode,
+  isLoggedIn
 }: LandingPageProps) {
   const features = [
     {
@@ -44,6 +47,8 @@ export function LandingPage({
     },
   ];
 
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Hero Section */}
@@ -61,8 +66,13 @@ export function LandingPage({
                 <Button
                   size="lg"
                   onClick={() => {
-                    setAuthMode('register');
-                    setShowAuthModal(true);
+                    if (isLoggedIn) {
+                      console.log(isLoggedIn);
+                      navigate('/dashboard');
+                    } else {
+                      setAuthMode('register');
+                      setShowAuthModal(true);
+                    }
                   }}
                   className="bg-white text-blue-600 hover:bg-gray-100"
                 >

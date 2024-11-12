@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { AddRoom } from "./add-room";
@@ -31,8 +32,9 @@ export interface User {
 }
 
 export function Room() {
-  const [rooms, setRooms] = useState([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [addRoomModal, setAddRoomModal] = useState(false);
+  const navigate = useNavigate();
 
   async function handleGenerateJoinLink(roomId: string) {
     try {
@@ -67,10 +69,14 @@ export function Room() {
     fetchRooms();
   }, []);
 
+  const handleRowClick = (roomId: string) => {
+    navigate(`/room/${roomId}`);
+  };
+
   return (
     <div className="py-4 px-16">
-      <div className="flex justify-between">
-        <h1 className="text-3xl text-blue-600 font-bold">Rooms</h1>
+      <div className="flex justify-between mb-4">
+        <h1 className="text-3xl text-blue-600 font-bold">Dashboard</h1>
         <Button variant="outline" onClick={() => {setAddRoomModal(true);}}>
           Add Room
         </Button>
@@ -86,7 +92,7 @@ export function Room() {
           <TableCaption>A list of all recent rooms created.</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead >Room Name</TableHead>
+              <TableHead>Room Name</TableHead>
               <TableHead>Members</TableHead>
               <TableHead className="text-right">Action</TableHead>
               <TableHead className="text-right">Invite Link</TableHead>
@@ -94,18 +100,35 @@ export function Room() {
           </TableHeader>
           <TableBody>
             {rooms && rooms.map((room: Room) => (
-              <TableRow key={`${room.id}`}>
+              <TableRow 
+                key={`${room.id}`} 
+                onClick={() => handleRowClick(room.id)}
+                className="cursor-pointer hover:bg-gray-100"
+              >
                 <TableCell className="font-medium">{`${room.title}`}</TableCell>
                 <TableCell>{`${room.members}`}</TableCell>
                 <TableCell className="text-right">
-                <Button variant="destructive" onClick={handleRemoveRoom}>
-                  <Trash /> Delete
-                </Button>
+                  <Button 
+                    variant="destructive" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveRoom();
+                    }}
+                  >
+                    <Trash className="mr-2 h-4 w-4" /> Delete
+                  </Button>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button size="sm" className="px-3" variant="outline" onClick={() => handleGenerateJoinLink(`${room.id}`)}>
-                    <span className="sr-only">Copy</span>
-                    <Copy />
+                  <Button 
+                    size="sm" 
+                    className="px-3" 
+                    variant="outline" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGenerateJoinLink(`${room.id}`);
+                    }}
+                  >
+                    <Copy className="mr-2 h-4 w-4" /> Copy Link
                   </Button>
                 </TableCell>
               </TableRow>

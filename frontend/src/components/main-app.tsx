@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Play, Upload } from 'lucide-react';
+import { ArrowLeft, Play, Upload } from 'lucide-react';
 import { VideoPlayer } from './video-player';
 
 interface Video {
@@ -16,7 +17,16 @@ interface Video {
   url: string;
 }
 
+interface ApiResponse {
+  videoId: string;
+  title: string;
+  room: {
+    id: string;
+  };
+}
+
 export default function MainApp() {
+  const { roomId } = useParams<{ roomId: string }>();
   const [videos, setVideos] = useState<Video[]>([]);
   const [videoTitle, setVideoTitle] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -26,12 +36,20 @@ export default function MainApp() {
 
   useEffect(() => {
     fetchVideos();
-  }, []);
+  }, [roomId]);
 
   const fetchVideos = async () => {
     try {
-      const response = await axios.get<Video[]>('http://localhost:8080/api/videos');
-      setVideos(response.data);
+      const response = await axios.get<ApiResponse[]>(`http://localhost:8080/video/stream/${roomId}`);
+      console.log('Response:', response.data);
+
+      const videosData: Video[] = response.data.map(d => ({
+        id: d.videoId,  // Now correctly using videoId instead of id
+        title: d.title,
+        url: `http://localhost:8080/video/stream/${roomId}/${d.videoId}`
+      }));
+      
+      setVideos(videosData);
     } catch (error) {
       console.error('Error fetching videos:', error);
     }
@@ -53,9 +71,10 @@ export default function MainApp() {
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('title', videoTitle);
+    formData.append('roomId', roomId || '');
 
     try {
-      await axios.post('http://localhost:8080/api/videos/upload', formData, {
+      await axios.post(`http://localhost:8080/video/upload/${roomId}`, formData, {
         onUploadProgress: (progressEvent) => {
           const progress = progressEvent.total
             ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
@@ -78,9 +97,16 @@ export default function MainApp() {
 
   return (
     <div className="p-4">
+      <div className="mb-4">
+        <Button asChild variant="outline">
+          <Link to="/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+          </Link>
+        </Button>
+      </div>
       <Card className="max-w-6xl mx-auto">
         <CardHeader>
-          <CardTitle>Video Dashboard</CardTitle>
+          <CardTitle>Video Dashboard to Stream and Upload Videos</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="videos">
@@ -101,7 +127,7 @@ export default function MainApp() {
                   <Card key={video.id}>
                     <CardContent className="p-4">
                       <img
-                        src={`http://localhost:8080/api/videos/thumbnail/${video.id}`}
+                        src={`http://localhost:8080/api/video/thumbnail/${video.id}`}
                         alt={video.title}
                         className="w-full aspect-video object-cover rounded-md mb-2"
                       />

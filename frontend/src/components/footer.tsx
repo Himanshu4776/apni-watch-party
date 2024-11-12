@@ -6,7 +6,7 @@ export function Footer() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
-            <a href="/" className="text-xl font-bold text-blue-600">
+            <a href="/landing" className="text-xl font-bold text-blue-600">
               Apni Watch Party
             </a>
             <p className="text-sm text-gray-600 mt-1">

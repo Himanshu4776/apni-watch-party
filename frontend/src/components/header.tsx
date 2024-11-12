@@ -22,7 +22,7 @@ export function Header({ isLoggedIn, setShowAuthModal, setAuthMode, handleLogout
     <header className="bg-white border-b sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center space-x-2">
+          <Link to="/landing" className="flex items-center space-x-2">
             <Video className="h-8 w-8 text-blue-600" />
             <span className="text-xl font-bold text-blue-600">
               Apni Watch Party
