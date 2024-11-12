@@ -35,8 +35,8 @@ public class RoomServiceImpl implements RoomService {
         return roomRepository.save(group);
     }
     
-    public Room createRoom(Long userId, Room roomToMake) {
-        Optional<User> user = userRepository.findById(userId);
+    public Room createRoom(String username, Room roomToMake) {
+        Optional<User> user = userRepository.findByUsername(username);
         if(user.isPresent()) {
             String title = roomToMake.getTitle().toString();
             roomToMake.setTitle(title);

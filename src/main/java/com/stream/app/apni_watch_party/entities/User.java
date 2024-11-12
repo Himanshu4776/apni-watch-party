@@ -1,5 +1,6 @@
 package com.stream.app.apni_watch_party.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,6 +28,7 @@ public class User {
     private String password;
 
     @ManyToMany(mappedBy = "users")
+    @JsonIgnore
     private Set<Room> rooms = new HashSet<>();
     // Getters and Setters
 }

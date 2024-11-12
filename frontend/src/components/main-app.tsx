@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,38 +16,64 @@ interface Video {
   url: string;
 }
 
-interface MainAppProps {
-  videos: Video[];
-  videoTitle: string;
-  setVideoTitle: (title: string) => void;
-  handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleUpload: (e: React.FormEvent) => void;
-  uploadStatus: string;
-}
-
-export default function MainApp({
-  videos,
-  videoTitle,
-  setVideoTitle,
-  handleFileSelect,
-  handleUpload,
-  uploadStatus,
-}: MainAppProps) {
+export default function MainApp() {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [videoTitle, setVideoTitle] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
 
-  const simulateUpload = async (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchVideos();
+  }, []);
+
+  const fetchVideos = async () => {
+    try {
+      const response = await axios.get<Video[]>('http://localhost:8080/api/videos');
+      setVideos(response.data);
+    } catch (error) {
+      console.error('Error fetching videos:', error);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedFile || !videoTitle) return;
+
     setIsUploading(true);
     setUploadProgress(0);
 
-    for (let i = 0; i <= 100; i += 10) {
-      setUploadProgress(i);
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
-    }
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('title', videoTitle);
 
-    handleUpload(e);
-    setIsUploading(false);
+    try {
+      await axios.post('http://localhost:8080/api/videos/upload', formData, {
+        onUploadProgress: (progressEvent) => {
+          const progress = progressEvent.total
+            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            : 0;
+          setUploadProgress(progress);
+        },
+      });
+
+      setUploadStatus('Video uploaded successfully!');
+      setVideoTitle('');
+      setSelectedFile(null);
+      fetchVideos();  // Refresh the video list
+    } catch (error) {
+      console.error('Error uploading video:', error);
+      setUploadStatus('Error uploading video. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -74,7 +101,7 @@ export default function MainApp({
                   <Card key={video.id}>
                     <CardContent className="p-4">
                       <img
-                        src={video.url}
+                        src={`http://localhost:8080/api/videos/thumbnail/${video.id}`}
                         alt={video.title}
                         className="w-full aspect-video object-cover rounded-md mb-2"
                       />
@@ -89,7 +116,7 @@ export default function MainApp({
             <TabsContent value="upload">
               <Card>
                 <CardContent className="p-6">
-                  <form onSubmit={simulateUpload} className="space-y-4">
+                  <form onSubmit={handleUpload} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="title">Video Title</Label>
                       <Input
@@ -108,7 +135,7 @@ export default function MainApp({
                         accept="video/*"
                       />
                     </div>
-                    <Button type="submit" disabled={isUploading || !videoTitle}>
+                    <Button type="submit" disabled={isUploading || !videoTitle || !selectedFile}>
                       {isUploading ? 'Uploading...' : 'Upload Video'}
                     </Button>
                   </form>

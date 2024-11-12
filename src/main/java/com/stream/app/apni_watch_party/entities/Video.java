@@ -5,6 +5,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Getter
 @Setter
@@ -21,5 +22,6 @@ public class Video {
     private String description;
     private String path;
     @ManyToOne
+    @JsonIgnore
     private Room room;
 }

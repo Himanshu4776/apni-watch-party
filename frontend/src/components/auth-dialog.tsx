@@ -17,7 +17,7 @@ interface AuthDialogProps {
   setAuthMode: (mode: 'login' | 'register') => void;
   handleAuth: (e: React.FormEvent) => void;
   authDataRef: React.MutableRefObject<{
-    email: string;
+    username: string;
     password: string;
     name: string;
   }>;
@@ -62,12 +62,12 @@ export function AuthDialog({
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="username">Username</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              onChange={(e) => (authDataRef.current.email = e.target.value)}
+              id="username"
+              type="username"
+              placeholder="Enter your username"
+              onChange={(e) => (authDataRef.current.username = e.target.value)}
             />
           </div>
           <div className="space-y-2">

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -29,8 +30,8 @@ public class UserServiceImpl implements UserService {
     }
 
     public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+        Optional<User> user = userRepository.findByUsername(username);
+        return user.orElse(null);
     }
 
     public List<User> getAllUsers() {

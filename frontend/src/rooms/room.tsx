@@ -1,53 +1,117 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@radix-ui/react-dialog";
-import { DialogHeader } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { title } from "process";
+import { AddRoom } from "./add-room";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Copy, Trash } from "lucide-react";
+
+export interface Room {
+  id: string;
+  title: string;
+  videos: Video[];
+  users: User[];
+  members: string;
+}
+
+export interface Video {
+  id: string;
+}
+
+export interface User {
+  id: string;
+  username: string;
+}
 
 export function Room() {
   const [rooms, setRooms] = useState([]);
   const [addRoomModal, setAddRoomModal] = useState(false);
-  const roomDataRef = useRef({ title: "", userId: -1 });
 
-  function handleRoomCreate() {
-    setAddRoomModal(true);
+  async function handleGenerateJoinLink(roomId: string) {
+    try {
+      const response = await axios.get(`http://localhost:8080/room/generate/${roomId}`)
+      const joinLink = response.data
+      await navigator.clipboard.writeText(joinLink)
+    } catch (error) {
+      console.error('Error generating join link:', error)
+    }
   }
+
+  function handleRemoveRoom() {
+    // noop
+  }
+
+  const fetchRooms = async () => {
+    try {
+      const username = localStorage.getItem('username')?.replace(/"/g, '');
+      const response = await axios.get(`http://localhost:8080/room/${username}`);
+
+      const roomsWithMembers = response.data.map((room: Room) => ({
+        ...room,
+        members: room?.users?.map(user => user?.username).join(', ')
+      }));
+      setRooms(roomsWithMembers);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+    }
+  };
+  
+  useEffect(() => {
+    fetchRooms();
+  }, []);
 
   return (
     <div className="py-4 px-16">
       <div className="flex justify-between">
         <h1 className="text-3xl text-blue-600 font-bold">Rooms</h1>
-        <Button variant="outline" onClick={handleRoomCreate}>
+        <Button variant="outline" onClick={() => {setAddRoomModal(true);}}>
           Add Room
         </Button>
       </div>
-      <div className="min-h-screen min-w-max flex flex-col bg-gray-100">
-        <Dialog open={addRoomModal} onOpenChange={setAddRoomModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                Create a new Room for your friends!!!
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={() => {}} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="title"
-                  type="text"
-                  placeholder="Enter room name"
-                  onChange={(e) => (roomDataRef.current.title = e.target.value)}
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Create
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+      {addRoomModal && (
+        <AddRoom
+          addRoomModal={addRoomModal}
+          setAddRoomModal={setAddRoomModal}
+        />
+      )}
+      <div className="">
+        <Table>
+          <TableCaption>A list of all recent rooms created.</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead >Room Name</TableHead>
+              <TableHead>Members</TableHead>
+              <TableHead className="text-right">Action</TableHead>
+              <TableHead className="text-right">Invite Link</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rooms && rooms.map((room: Room) => (
+              <TableRow key={`${room.id}`}>
+                <TableCell className="font-medium">{`${room.title}`}</TableCell>
+                <TableCell>{`${room.members}`}</TableCell>
+                <TableCell className="text-right">
+                <Button variant="destructive" onClick={handleRemoveRoom}>
+                  <Trash /> Delete
+                </Button>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button size="sm" className="px-3" variant="outline" onClick={() => handleGenerateJoinLink(`${room.id}`)}>
+                    <span className="sr-only">Copy</span>
+                    <Copy />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

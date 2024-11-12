@@ -7,7 +7,7 @@ public interface RoomService {
 
     String generateJoinLink(String groupId);
 
-    Room createRoom(Long userId, Room roomToMake);
+    Room createRoom(String username, Room roomToMake);
 
     Room getRoomById(String roomId);
 }

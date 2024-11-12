@@ -26,7 +26,6 @@ public class Room {
     private String title;
 
     @OneToMany(mappedBy = "room")
-    @JsonIgnore
     private List<Video> videos = new ArrayList<>();
 
     @ManyToMany
@@ -34,6 +33,5 @@ public class Room {
             name = "room_users",
             joinColumns = @JoinColumn(name = "room_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
-    @JsonIgnore
     private Set<User> users = new HashSet<>();
 }
