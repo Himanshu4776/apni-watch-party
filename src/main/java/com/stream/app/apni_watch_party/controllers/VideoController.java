@@ -6,16 +6,25 @@ import com.stream.app.apni_watch_party.payload.CustomMessage;
 import com.stream.app.apni_watch_party.service.RoomService;
 import com.stream.app.apni_watch_party.service.VideoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
+
+import static java.nio.file.Files.newInputStream;
 
 @RestController
 @RequestMapping("/video")
@@ -69,4 +78,78 @@ public class VideoController {
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(resource);
     }
+
+    @GetMapping("/stream/range/{roomId}/{videoId}")
+    public ResponseEntity<Resource> streamVideoInRange(@PathVariable String videoId,
+                                                       @PathVariable String roomId,
+                                                       @RequestHeader(value = "range", required = false) String range) {
+        Room room = roomService.getRoomById(roomId);
+        Video matchedVideo = room.getVideos().stream()
+            .filter(video -> video.getVideoId().equals(videoId))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Video not found in room"));
+
+        Path path = Paths.get(matchedVideo.getPath());
+        FileSystemResource resource = new FileSystemResource((path));
+        String contentType = matchedVideo.getContentType();
+        if (contentType == null) {
+            contentType = "application/octet-stream";
+        }
+        long fileLength = path.toFile().length();
+        // if there's no range passes then process whole file.
+        if (range == null) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .body(resource);
+        }
+        Long rangeStart;
+        Long rangeEnd;
+
+        String[] ranges = range.replace("bytes=", "").split("-");
+        rangeStart = Long.parseLong(ranges[0]);
+        if(ranges.length > 1) {
+            rangeEnd = Long.parseLong(ranges[1]);
+        } else {
+            rangeEnd = fileLength - 1;
+        }
+
+        if(rangeEnd > fileLength -1) {
+            rangeEnd = fileLength - 1;
+        }
+
+        InputStream inputStream;
+        try {
+            inputStream = Files.newInputStream(path);
+            inputStream.skip(rangeStart);
+        } catch (Exception e) {
+            return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        long contentLength = rangeEnd - rangeStart + 1;
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Range", "bytes " + rangeStart + "-" + rangeEnd + "/" + fileLength);
+        headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+        headers.add("Pragma", "no-cache");
+        headers.add("Expires", "0");
+        headers.add("X-Content-Type-Options", "nosniff");
+        headers.setContentLength(contentLength);
+
+        return ResponseEntity
+                .status(HttpStatus.PARTIAL_CONTENT)
+                .headers(headers)
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(new InputStreamResource(inputStream));
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+

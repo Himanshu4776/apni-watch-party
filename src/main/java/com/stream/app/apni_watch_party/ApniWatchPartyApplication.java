@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SeekStreamApplication {
+public class ApniWatchPartyApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SeekStreamApplication.class, args);
+		SpringApplication.run(ApniWatchPartyApplication.class, args);
 	}
 
 }
