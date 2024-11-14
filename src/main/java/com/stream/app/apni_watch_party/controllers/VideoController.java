@@ -1,5 +1,6 @@
 package com.stream.app.apni_watch_party.controllers;
 
+import com.stream.app.apni_watch_party.exception.ResourceNotFoundException;
 import com.stream.app.apni_watch_party.utils.Constants;
 import com.stream.app.apni_watch_party.entities.Room;
 import com.stream.app.apni_watch_party.entities.Video;
@@ -58,8 +59,11 @@ public class VideoController {
 
     @GetMapping("/stream/{roomId}")
     public ResponseEntity<List<Video>> allVideos(@PathVariable String roomId) {
-        List<Video> videos = videoService.getAll();
-        return ResponseEntity.ok(videos);
+        List<Video> videos = videoService.getAllVideosInRoom(roomId);
+        if (videos != null) {
+            return ResponseEntity.ok(videos);
+        }
+        throw  new ResourceNotFoundException("No video found in this room");
     }
 
     @GetMapping("/stream/{roomId}/{videoId}")
@@ -106,13 +110,21 @@ public class VideoController {
         String[] ranges = range.replace("bytes=", "").split("-");
         rangeStart = Long.parseLong(ranges[0]);
         rangeEnd = rangeStart + Constants.CHUNK_SIZE - 1;
-
         InputStream inputStream;
+
+        if (rangeEnd >= fileLength) {
+            rangeEnd = fileLength-1;
+        }
+
         try {
             inputStream = Files.newInputStream(path);
             inputStream.skip(rangeStart);
-
             long contentLength = rangeEnd - rangeStart + 1;
+
+            // now we will not send the whole content length instead we are sending chunks of data (1MB).
+            byte[] data = new byte[(int) contentLength];
+            int read = inputStream.read(data, 0, data.length);
+
             HttpHeaders headers = new HttpHeaders();
             headers.add("Content-Range", "bytes " + rangeStart + "-" + rangeEnd + "/" + fileLength);
             headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -121,16 +133,10 @@ public class VideoController {
             headers.add("X-Content-Type-Options", "nosniff");
             headers.setContentLength(contentLength);
 
-            // now we will not send the whole content length instead we are sending chunks of data (1MB).
-            byte[] data = new byte[(int) contentLength];
-            int read = inputStream.read(data, 0, data.length);
-            System.out.println("read data: " + read);
-
             return ResponseEntity
                     .status(HttpStatus.PARTIAL_CONTENT)
                     .headers(headers)
                     .contentType(MediaType.parseMediaType(contentType))
-//                    .body(new InputStreamResource(inputStream));
                     .body(new ByteArrayResource(data));
         } catch (Exception e) {
             return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

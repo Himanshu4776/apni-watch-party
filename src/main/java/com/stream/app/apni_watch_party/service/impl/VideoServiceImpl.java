@@ -1,7 +1,9 @@
 package com.stream.app.apni_watch_party.service.impl;
 
+import com.stream.app.apni_watch_party.entities.Room;
 import com.stream.app.apni_watch_party.entities.Video;
 import com.stream.app.apni_watch_party.repositories.VideoRepository;
+import com.stream.app.apni_watch_party.service.RoomService;
 import com.stream.app.apni_watch_party.service.VideoService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,9 @@ public class VideoServiceImpl implements VideoService {
 
     @Autowired
     VideoRepository videoRepository;
+
+    @Autowired
+    RoomService roomService;
 
     @PostConstruct
     public void init() {
@@ -79,5 +84,14 @@ public class VideoServiceImpl implements VideoService {
     @Override
     public List<Video> getAll() {
         return videoRepository.findAll();
+    }
+
+    @Override
+    public List<Video> getAllVideosInRoom(String roomId) {
+        Room roomById = roomService.getRoomById(roomId);
+        if(roomById != null) {
+            return roomById.getVideos();
+        }
+        return null;
     }
 }

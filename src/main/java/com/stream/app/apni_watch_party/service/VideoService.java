@@ -13,4 +13,6 @@ public interface VideoService {
     Video get(String VideoId);
 
     List<Video> getAll();
+
+    List<Video> getAllVideosInRoom(String roomId);
 }

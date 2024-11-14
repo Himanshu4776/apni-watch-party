@@ -46,7 +46,7 @@ export default function MainApp() {
       const videosData: Video[] = response.data.map(d => ({
         id: d.videoId,  // Now correctly using videoId instead of id
         title: d.title,
-        url: `http://localhost:8080/video/stream/${roomId}/${d.videoId}`
+        url: `http://localhost:8080/video/stream/range/${roomId}/${d.videoId}`
       }));
       
       setVideos(videosData);
@@ -71,7 +71,7 @@ export default function MainApp() {
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('title', videoTitle);
-    formData.append('roomId', roomId || '');
+    formData.append('description', (videoTitle + '-' + roomId) || '');
 
     try {
       await axios.post(`http://localhost:8080/video/upload/${roomId}`, formData, {
