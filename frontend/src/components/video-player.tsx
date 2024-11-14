@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Rewind, FastForward, Maximize, Minimize } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -11,8 +12,40 @@ interface VideoPlayerProps {
 export function VideoPlayer({ videoUrl, title }: VideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      const handleTimeUpdate = () => {
+        if (!isDragging) {
+          setCurrentTime(video.currentTime);
+        }
+      };
+
+      const handleLoadedMetadata = () => {
+        setDuration(video.duration);
+      };
+
+      video.addEventListener('timeupdate', handleTimeUpdate);
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+      return () => {
+        video.removeEventListener('timeupdate', handleTimeUpdate);
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      };
+    }
+  }, [isDragging]);
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -28,6 +61,16 @@ export function VideoPlayer({ videoUrl, title }: VideoPlayerProps) {
   const seekVideo = (seconds: number) => {
     if (videoRef.current) {
       videoRef.current.currentTime += seconds;
+    }
+  };
+
+  const handleSeek = (value: number[]) => {
+    if (videoRef.current && value.length > 0) {
+      setIsDragging(true);
+      const newTime = value[0];
+      setCurrentTime(newTime);
+      videoRef.current.currentTime = newTime;
+      setIsDragging(false);
     }
   };
 
@@ -63,19 +106,37 @@ export function VideoPlayer({ videoUrl, title }: VideoPlayerProps) {
                 Your browser does not support the video tag.
               </video>
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                <div className="flex justify-center items-center space-x-2">
-                  <Button onClick={() => seekVideo(-10)} variant="ghost" size="sm" className="text-white">
-                    <Rewind className="h-4 w-4" />
-                  </Button>
-                  <Button onClick={togglePlay} variant="ghost" size="sm" className="text-white">
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                  </Button>
-                  <Button onClick={() => seekVideo(10)} variant="ghost" size="sm" className="text-white">
-                    <FastForward className="h-4 w-4" />
-                  </Button>
-                  <Button onClick={toggleFullScreen} variant="ghost" size="sm" className="text-white">
-                    {isFullScreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-                  </Button>
+                <div className="space-y-2">
+                  <div className="flex items-center px-4">
+                    <span className="text-white text-sm">{formatTime(currentTime)}</span>
+                    <div className="flex-1 mx-4">
+                      <Slider
+                        value={[currentTime]}
+                        min={0}
+                        max={duration || 100}
+                        step={0.1}
+                        onValueChange={handleSeek}
+                        className="cursor-pointer"
+                        onPointerDown={() => setIsDragging(true)}
+                        onPointerUp={() => setIsDragging(false)}
+                      />
+                    </div>
+                    <span className="text-white text-sm">{formatTime(duration)}</span>
+                  </div>
+                  <div className="flex justify-center items-center space-x-2">
+                    <Button onClick={() => seekVideo(-10)} variant="ghost" size="sm" className="text-white">
+                      <Rewind className="h-4 w-4" />
+                    </Button>
+                    <Button onClick={togglePlay} variant="ghost" size="sm" className="text-white">
+                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    </Button>
+                    <Button onClick={() => seekVideo(10)} variant="ghost" size="sm" className="text-white">
+                      <FastForward className="h-4 w-4" />
+                    </Button>
+                    <Button onClick={toggleFullScreen} variant="ghost" size="sm" className="text-white">
+                      {isFullScreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
