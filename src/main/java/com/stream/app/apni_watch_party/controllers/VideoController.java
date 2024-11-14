@@ -1,5 +1,6 @@
 package com.stream.app.apni_watch_party.controllers;
 
+import com.stream.app.apni_watch_party.utils.Constants;
 import com.stream.app.apni_watch_party.entities.Room;
 import com.stream.app.apni_watch_party.entities.Video;
 import com.stream.app.apni_watch_party.payload.CustomMessage;
@@ -8,7 +9,6 @@ import com.stream.app.apni_watch_party.service.VideoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,8 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
-
-import static java.nio.file.Files.newInputStream;
 
 @RestController
 @RequestMapping("/video")
@@ -107,38 +105,36 @@ public class VideoController {
 
         String[] ranges = range.replace("bytes=", "").split("-");
         rangeStart = Long.parseLong(ranges[0]);
-        if(ranges.length > 1) {
-            rangeEnd = Long.parseLong(ranges[1]);
-        } else {
-            rangeEnd = fileLength - 1;
-        }
-
-        if(rangeEnd > fileLength -1) {
-            rangeEnd = fileLength - 1;
-        }
+        rangeEnd = rangeStart + Constants.CHUNK_SIZE - 1;
 
         InputStream inputStream;
         try {
             inputStream = Files.newInputStream(path);
             inputStream.skip(rangeStart);
+
+            long contentLength = rangeEnd - rangeStart + 1;
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Range", "bytes " + rangeStart + "-" + rangeEnd + "/" + fileLength);
+            headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+            headers.add("Pragma", "no-cache");
+            headers.add("Expires", "0");
+            headers.add("X-Content-Type-Options", "nosniff");
+            headers.setContentLength(contentLength);
+
+            // now we will not send the whole content length instead we are sending chunks of data (1MB).
+            byte[] data = new byte[(int) contentLength];
+            int read = inputStream.read(data, 0, data.length);
+            System.out.println("read data: " + read);
+
+            return ResponseEntity
+                    .status(HttpStatus.PARTIAL_CONTENT)
+                    .headers(headers)
+                    .contentType(MediaType.parseMediaType(contentType))
+//                    .body(new InputStreamResource(inputStream));
+                    .body(new ByteArrayResource(data));
         } catch (Exception e) {
             return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
-        long contentLength = rangeEnd - rangeStart + 1;
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Range", "bytes " + rangeStart + "-" + rangeEnd + "/" + fileLength);
-        headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
-        headers.add("Pragma", "no-cache");
-        headers.add("Expires", "0");
-        headers.add("X-Content-Type-Options", "nosniff");
-        headers.setContentLength(contentLength);
-
-        return ResponseEntity
-                .status(HttpStatus.PARTIAL_CONTENT)
-                .headers(headers)
-                .contentType(MediaType.parseMediaType(contentType))
-                .body(new InputStreamResource(inputStream));
     }
 }
 
