@@ -1,20 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import axios from 'axios';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Play, Upload } from 'lucide-react';
-import { VideoPlayer } from './video-player';
+import React, { useState, useEffect } from "react";
+import { Link, useParams } from "react-router-dom";
+import axios from "axios";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, Play, Upload } from "lucide-react";
+import { VideoPlayer } from "./video-player";
+import { VideoThumbnail } from "./video-thumbnail";
 
 interface Video {
   id: string;
   title: string;
   url: string;
+  thumbnail?: string;
 }
 
 interface ApiResponse {
@@ -28,26 +30,54 @@ interface ApiResponse {
 export default function MainApp() {
   const { roomId } = useParams<{ roomId: string }>();
   const [videos, setVideos] = useState<Video[]>([]);
-  const [videoTitle, setVideoTitle] = useState('');
+  const [videoTitle, setVideoTitle] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState('');
+  const [uploadStatus, setUploadStatus] = useState("");
 
   useEffect(() => {
     fetchVideos();
   }, [roomId]);
 
+  const generateThumbnail = async (videoUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.crossOrigin = 'anonymous';
+      video.src = videoUrl;
+      
+      video.addEventListener('loadeddata', () => {
+        video.currentTime = 1; // Seek to 1 second
+      });
+
+      video.addEventListener('seeked', () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        context?.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const thumbnailUrl = canvas.toDataURL('image/jpeg');
+        resolve(thumbnailUrl);
+      });
+    });
+  };
+
   const fetchVideos = async () => {
     try {
       const response = await axios.get<ApiResponse[]>(`http://localhost:8080/video/stream/${roomId}`);
-      console.log('Response:', response.data);
-
-      const videosData: Video[] = response.data.map(d => ({
-        id: d.videoId,  // Now correctly using videoId instead of id
-        title: d.title,
-        url: `http://localhost:8080/video/stream/range/${roomId}/${d.videoId}`
-      }));
+      
+      const videosData: Video[] = await Promise.all(
+        response.data.map(async (d) => {
+          const videoUrl = `http://localhost:8080/video/stream/range/${roomId}/${d.videoId}`;
+          const thumbnail = await generateThumbnail(videoUrl);
+          return {
+            id: d.videoId,
+            title: d.title,
+            url: videoUrl,
+            thumbnail
+          };
+        })
+      );
       
       setVideos(videosData);
     } catch (error) {
@@ -69,27 +99,31 @@ export default function MainApp() {
     setUploadProgress(0);
 
     const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('title', videoTitle);
-    formData.append('description', (videoTitle + '-' + roomId) || '');
+    formData.append("file", selectedFile);
+    formData.append("title", videoTitle);
+    formData.append("description", videoTitle + "-" + roomId || "");
 
     try {
-      await axios.post(`http://localhost:8080/video/upload/${roomId}`, formData, {
-        onUploadProgress: (progressEvent) => {
-          const progress = progressEvent.total
-            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            : 0;
-          setUploadProgress(progress);
-        },
-      });
+      await axios.post(
+        `http://localhost:8080/video/upload/${roomId}`,
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            const progress = progressEvent.total
+              ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              : 0;
+            setUploadProgress(progress);
+          },
+        }
+      );
 
-      setUploadStatus('Video uploaded successfully!');
-      setVideoTitle('');
+      setUploadStatus("Video uploaded successfully!");
+      setVideoTitle("");
       setSelectedFile(null);
-      fetchVideos();  // Refresh the video list
+      fetchVideos(); // Refresh the video list
     } catch (error) {
-      console.error('Error uploading video:', error);
-      setUploadStatus('Error uploading video. Please try again.');
+      console.error("Error uploading video:", error);
+      setUploadStatus("Error uploading video. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -123,19 +157,21 @@ export default function MainApp() {
 
             <TabsContent value="videos" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {videos.map((video) => (
-                  <Card key={video.id}>
-                    <CardContent className="p-4">
+              {videos.map((video) => (
+                <Card key={video.id}>
+                  <CardContent className="p-4">
+                    <div className="relative aspect-video mb-2">
                       <img
-                        src={`http://localhost:8080/api/video/thumbnail/${video.id}`}
+                        src={video.thumbnail || '/placeholder-image.jpg'}
                         alt={video.title}
-                        className="w-full aspect-video object-cover rounded-md mb-2"
+                        className="w-full h-full object-cover rounded-md"
                       />
-                      <h3 className="font-medium mb-2">{video.title}</h3>
-                      <VideoPlayer videoUrl={video.url} title={video.title} />
-                    </CardContent>
-                  </Card>
-                ))}
+                    </div>
+                    <h3 className="font-medium mb-2">{video.title}</h3>
+                    <VideoPlayer videoUrl={video.url} title={video.title} />
+                  </CardContent>
+                </Card>
+              ))}
               </div>
             </TabsContent>
 
@@ -161,8 +197,11 @@ export default function MainApp() {
                         accept="video/*"
                       />
                     </div>
-                    <Button type="submit" disabled={isUploading || !videoTitle || !selectedFile}>
-                      {isUploading ? 'Uploading...' : 'Upload Video'}
+                    <Button
+                      type="submit"
+                      disabled={isUploading || !videoTitle || !selectedFile}
+                    >
+                      {isUploading ? "Uploading..." : "Upload Video"}
                     </Button>
                   </form>
                   {isUploading && (

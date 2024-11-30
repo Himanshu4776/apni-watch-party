@@ -129,10 +129,10 @@ export function LandingPage({
           </h2>
           <Tabs defaultValue="browse" className="w-full">
             <TabsList className="grid w-full grid-cols-1 md:grid-cols-3">
-              <TabsTrigger value="browse">Browse Content</TabsTrigger>
+              <TabsTrigger value="browse">Binge Watch Content</TabsTrigger>
               <TabsTrigger value="upload">Upload Videos</TabsTrigger>
               <TabsTrigger value="interact">
-                Interact with Community
+                Interact with Friends
               </TabsTrigger>
             </TabsList>
             <TabsContent value="browse" className="mt-6">
@@ -140,21 +140,21 @@ export function LandingPage({
                 <CardContent className="pt-6">
                   <div className="aspect-video bg-gray-200 rounded-lg mb-4 overflow-hidden">
                     <img
-                      src="/api/placeholder/1280/720"
+                      src="/binge-watch.png"
                       alt="Video browsing interface"
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">
-                    Discover Amazing Content
+                    Binge Amazing Content
                   </h3>
                   <p className="text-gray-600">
-                    Browse through a vast library of videos, curated playlists,
-                    and trending content. Our intuitive interface makes it easy
-                    to find what you're looking for.
+                    Browse through a vast library of videos, 
+                    Binge watch your curate content without any buffering.
+                    Our intuitive video player interface makes it easy to stream and enjoy your favorite videos.
                   </p>
                   <div className="mt-4 flex items-center space-x-4">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
                       <Play className="mr-2 h-4 w-4" /> Watch Now
                     </Button>
                     <Button variant="ghost" size="sm">
@@ -169,9 +169,9 @@ export function LandingPage({
                 <CardContent className="pt-6">
                   <div className="aspect-video bg-gray-200 rounded-lg mb-4 overflow-hidden">
                     <img
-                      src="/api/placeholder/1280/720"
+                      src="/video-upload-dashboard.png"
                       alt="Video upload interface"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full bg-cover"
                     />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">
@@ -179,11 +179,11 @@ export function LandingPage({
                   </h3>
                   <p className="text-gray-600">
                     Uploading your videos is a breeze with our user-friendly
-                    interface. Add titles, descriptions, and tags to help your
+                    interface. Add titles to your videos to help your
                     content reach the right audience.
                   </p>
                   <div className="mt-4">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
                       <Upload className="mr-2 h-4 w-4" /> Start Uploading
                     </Button>
                   </div>
@@ -195,17 +195,17 @@ export function LandingPage({
                 <CardContent className="pt-6">
                   <div className="aspect-video bg-gray-200 rounded-lg mb-4 overflow-hidden">
                     <img
-                      src="/api/placeholder/1280/720"
+                      src="/dashboard.png"
                       alt="Community interaction interface"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full bg-center"
                     />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">
                     Engage with the Community
                   </h3>
                   <p className="text-gray-600">
-                    Connect with other creators and viewers. Leave comments,
-                    join discussions, and build your following. Our platform
+                    Connect with your friends and binge watch your favourite content. 
+                    Interact with them by creating separate rooms with them. Our platform
                     fosters a vibrant community of video enthusiasts.
                   </p>
                   <div className="mt-4 flex items-center space-x-4">
@@ -229,15 +229,15 @@ export function LandingPage({
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
-              <div className="text-4xl font-bold mb-2">1M+</div>
+              <div className="text-4xl font-bold mb-2">100+</div>
               <div className="text-gray-400">Active Users</div>
             </div>
             <div>
-              <div className="text-4xl font-bold mb-2">500K+</div>
+              <div className="text-4xl font-bold mb-2">50+</div>
               <div className="text-gray-400">Videos Uploaded</div>
             </div>
             <div>
-              <div className="text-4xl font-bold mb-2">50M+</div>
+              <div className="text-4xl font-bold mb-2">200+</div>
               <div className="text-gray-400">Monthly Views</div>
             </div>
           </div>
