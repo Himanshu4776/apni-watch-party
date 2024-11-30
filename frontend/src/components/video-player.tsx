@@ -29,14 +29,22 @@ export function VideoPlayer({ videoUrl, title }: VideoPlayerProps) {
 
       const handleLoadedMetadata = () => {
         setDuration(video.duration);
+        setCurrentTime(0);
+      };
+
+      const handleEnded = () => {
+        setIsPlaying(false);
+        setCurrentTime(video.duration);
       };
 
       video.addEventListener('timeupdate', handleTimeUpdate);
       video.addEventListener('loadedmetadata', handleLoadedMetadata);
+      video.addEventListener('ended', handleEnded);
 
       return () => {
         video.removeEventListener('timeupdate', handleTimeUpdate);
         video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        video.removeEventListener('ended', handleEnded);
       };
     }
   }, [isDragging]);
@@ -66,11 +74,9 @@ export function VideoPlayer({ videoUrl, title }: VideoPlayerProps) {
 
   const handleSeek = (value: number[]) => {
     if (videoRef.current && value.length > 0) {
-      setIsDragging(true);
       const newTime = value[0];
-      setCurrentTime(newTime);
       videoRef.current.currentTime = newTime;
-      setIsDragging(false);
+      setCurrentTime(newTime);
     }
   };
 
